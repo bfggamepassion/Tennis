@@ -1,0 +1,6 @@
+__pycache__/
+disassembly/
+test/build
+test/disassembly
+test/test.gb
+tmp/

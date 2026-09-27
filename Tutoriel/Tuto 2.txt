@@ -1,0 +1,356 @@
+Guide to inline assembly using Boriel’s ZX compiler to create zx spectrum code.
+
+
+© 2012 Britlion - Thanks to all the Wossers, and all the Boriel forum folks (especially Boriel!) who make everything I learn possible. Special shoutout to Gigatron for allowing me to publish this.
+
+
+Going from basic to machine code can be tricky for beginners. Boriel’s ZX Basic does make it easier, however, in my opinion. You can plan bits of the logic in basic, and then replace them with pure machine code modules as you go along - and because the compiler outputs pretty fast machine code to begin with, you only really need to hand-assemble any speed critical parts anyway. Regardless, it’s a great way to learn machine code on the z80 - you don’t need to know how to write a whole program to give it a try.
+
+
+What this tutorial is going to discuss is how to write a function in basic, and replace it with a pure machine code version instead, plugged straight in in place of the zx basic version.
+
+
+Do remember that the zx basic version is already compiled, so is already hundreds of times faster than sinclair basic already. This tutorial is more about showing how the compiler lets you replace parts of the code with inline assembly seamlessly.
+
+
+Let’s create a function that games programmers have been known to use. A function that takes a byte representing something graphical and mirrors it left to right, so the bits are the other way around.
+
+
+So BIN 11010000 (208 in decimal) becomes the equivalent of BIN 00001011 (11 in decimal)
+
+
+Here’s the basic version, with lots of comments to help you through it.
+
+
+function mirror (dowedoit as uByte, number as uByte) as uByte
+
+REM I want this function to only mirror if told to. So if dowedoit=0, that means we don't mirror the bits.
+
+
+ if dowedoit=0 then return number
+
+ end if
+
+ 
+
+ DIM loopcount as uByte : REM this counts our 8 bit loop.
+
+ DIM potentialOutput as uByte : REM this is the variable we need to hold our part built output.
+
+ 
+
+ REM The algorithm here isn't too difficult to follow, if you think of "number" as 8 bits, instead of a numeric value.
+
+ REM This is wise, since we're going to use this function to mirror pixels for the screen.
+
+ REM How it works is that it takes the bits input, and checks the rightmost column
+
+ REM If there's a 1 there, it puts it in the right hand side of the output, and the input rolls right
+
+ REM and the output rolls left.
+
+
+ REM The result of this is the same bits in the output as were in the input, but opposite way around.
+
+ REM Input bits 01234567 --> output bits 76543210
+
+ 
+
+ REM this lets us store graphics as facing left, but be flipped for facing right if we need that, for example.
+
+ 
+
+ for loopcount=0 to 7
+
+    let potentialOutput=potentialOutput*2
+
+
+    REM this in binary shifts all the bits one to the left, and adds a zero on the end.
+
+    REM It's the same thing in decimal - if you multiply by 10, all the columns move one to the left. Since binary is
+
+    REM a base 2 system, and decimal is base 10, then *2 in binary behaves a lot like *10 in decimal.
+
+
+    if number BAND 1 = 1 then let potentialOutput=potentialOutput+1
+
+    END IF
+
+   
+
+
+REM "BAND" is the binary AND function. In this case, we're looking at the rightmost bit, and seeing if it's 1. If it's            REM 1, we put a 1 in the right most column of the output too.
+
+   
+
+    let number=number/2
+
+REM Just like above, we're rolling the bits right with a divide by 2. Here, the last bit is lost, since in integer maths
+
+REM 1/2=0. We don't have a binary point for fractions.
+
+ next loopcount
+
+ 
+
+ return potentialOutput
+
+ REM Return sends back the output from the function
+
+
+END FUNCTION
+
+
+cls
+
+REM Here’s how you use it:
+
+
+print 0,mirror(1,0)
+
+print 1,mirror(1,1)
+
+print "(not mirrored) ";1,mirror(0,1)
+
+print 2,mirror(1,2)
+
+print 3,mirror(1,3)
+
+print 4,mirror(1,4)
+
+print 8,mirror(1,8)
+
+print 16,mirror(1,16)
+
+print 32,mirror(1,32)
+
+print 64,mirror(1,64)
+
+print 127,mirror(1,127)
+
+print 255,mirror(1,255)
+
+print
+
+print 208,mirror(1,208)
+
+
+
+
+Boriel’s basic is far more flexible than Sinclair Basic in several ways. Firstly line numbers are not required (though they are allowed). You can be more flexible with variable names - here I’ve tried to use long descriptive ones so that the variable is what programmers call “self documenting” - that is, the name makes it obvious what it does. You should try to be descriptive in your variable names. They don’t slow the compiled code down, and don’t cost extra memory.
+
+
+let score=score+10 is far easier to understand later on than
+
+let s=s+10
+
+Sinclair basic had very limited memory, so such terseness was often a good idea. With a cross compiler like ZX Basic, you don’t have that limitation. Describe away. The same goes for REM statements - there’s no need to scrimp!
+
+
+One thing that does differ though, that’s very important:
+
+You must have an END IF closing off an IF statement. This is the one thing you MUST ALWAYS change when converting sinclair basic for the compiler. There are other differences - some statements aren’t (completely) supported, for example - but this is the biggest one to be aware of.
+
+
+You can see this used above.
+
+
+Of course, IF is more flexible as a result - for example -
+
+
+IF score=0 then print “No Score”
+
+   ELSEIF 
+
+      score > 10000 then print “Amazing Score!”
+
+   ELSE 
+
+      print score
+
+END IF
+
+
+
+Hopefully this is self explanatory - if the score is 0, then it prints the words “No Score”. If you have a really high score, you get the words “Amazing Score!” and if you have something in between (or for that matter negative), you get the value of the variable score printed.
+
+
+The other thing that’s different is use of variable types. Here we have defined things like loopcounter as a uByte - that is an unsigned byte. It can therefore only take the values 0-255 as it has to fit in one byte of memory. While this limits the values that can be used, it massively increases the processing speed of using it. If we add numbers to it, the resultant code is much simpler - sinclair basic has to do loopcounter=loopcounter+1 using the same code that could handle -2.4+345343.3444, which is clearly a much more complex case!
+
+
+So, let’s test what this looks like shall we?
+
+
+How about this program:
+
+
+DIM n as uByte
+
+dim m as uInteger
+
+
+cls
+
+
+REM: Let's print some characters on the screen.
+
+for n=32 to 127
+
+print chr$(n); chr$(n);
+
+next n
+
+
+REM: Same thing, in the middle third of the screen.
+
+print at 8,0;
+
+for n=32 to 127
+
+print chr$(n); chr$(n);
+
+next n
+
+
+pause 0
+
+for m=18432 to  20480 : REM This takes the screen bytes in the middle third
+
+poke m,mirror(1,peek m) : REM peeks them, and pokes them back, mirrored.
+
+next m
+
+
+
+
+As you can see, each character in the middle of the screen got mirrored.
+
+
+If you compile and run this, you’ll need to include the mirror function from earlier. You’ll also see it working, which is quite fascinating - even as compiled code it’s slow enough to take a couple of seconds to run. A similar basic program would probably take minutes to work, however.
+
+
+But say we think that’s still not fast enough? Can we go faster?
+
+How about changing the mirror function into assembly language/machine code directly? Hand coded assembly is (usually) faster than compiled code - humans are better at the job still.
+
+
+I’m not going to teach you machine code, here. There are lots of good books and articles on it, especially Toni Baker’s work. What I’ll discuss here is how to convert using Boriel’s compiler.
+
+
+Let’s convert the mirror function then:
+
+
+The first thing we’ll do is change the function to a fastcall function. This means that it does less setup than a standard function, and we can “ret” straight out of it, if we want. We also have to clean up the stack ourselves, while making registers fit the promised return type value we set up - in this case we’re returning a uByte, which means our A register must contain our return value.
+
+
+You don’t have to use a fastcall function to use inline machine code assembly, but it’s often useful to do so for simple functions - especially single parameter functions. I’ve deliberately made this a two parameter function, so you can see how to do it with those.
+
+
+
+Fastcall functions are also handed the parameters on the stack, but the first one comes in on the registers, which is handy.
+
+
+function fastcall mirror (dowedoit as uByte, number as uByte) as uByte
+
+ REM This function is now machine code, so the parameters arrive on the machine code stack.
+
+ asm
+
+ pop hl ; pull our return address from the stack - it's always the first "parameter" because when the main code uses
+
+; "CALL", the return address is stacked.
+
+        ; we have to get that out of the way first.
+
+ ;"dowedoit" is a byte, so arrives in the A register. Fastcall functions send the first parameter in the registers.
+
+ pop bc ; pop our second parameter (Number) into b (it also loads another byte we don't care about into c.
+
+;Since number is a uByte, it fits in an 8 bit register.)
+
+ ; so now our stack has no parameters at all on it - not even a return address (which is in HL).
+
+push hl ; put our return address back on the stack. It's used by ret at the end of this function.
+
+;Note that if this was a single parameter, you wouldn’t need to mess with the stack at all.
+
+;A fastcall function gets its first parameter in the registers.
+
+ 
+
+ AND A ; this tests the A register (without changing it), setting the flags register so we can act on it.
+
+ LD A,B ; Put "number" that was in B into the A register.
+
+ 
+
+ RET Z ; return if our flags say that A was at zero when we tested it - that is "dowedoit" was zero.
+
+;Since A now holds "number", we're returning it untouched.
+
+     ; ret also pops the address off the stack, meaning we get back with a clean stack.
+
+       
+
+       ; So if we have to mirror what's in the A register, we get to here. We didn't return.
+
+       
+
+ld b,8 ; Let's use B as a loop counter. It counts down, here.
+
+ld c,a ; let's put our original number in c, because we need the A register for output.
+
+     
+
+XOR A  ; This (exclusive or) zeroes out the A register. It's shorter and faster than LD A,0 which needs two bytes.
+
+;It also handily clears the carry flag, which we'll be using.
+
+       ; We'll use the A register to build up our output.
+
+       
+
+mirrorLoop:         ; This is a label we can jump to later. Sort of like a line number - it marks a point for the
+
+;assembler to say "remember this place with this name"
+
+   RR C           ; This is our divide by two instruction - rotate right C. Instead of losing the last bit, though,
+
+;it is put into the carry flag.
+
+   RLA            ; This does the A=A*2 part - it rotates the A register left. It also rotates in the carry flag on the
+
+;right, instead of a zero.
+
+                     ; This means we're sliding bits off C one by one to the right into the carry flag, and onto A going left
+
+; from the carry flag. We're basicall using the flag as a temporary 1 bit store.
+
+DJNZ mirrorLoop ; Decrease B and if it isn't zero, jump to mirrorloop.
+
+
+; So the A register now holds our mirrored result, and we can return it.
+
+ret        
+
+end asm
+
+END FUNCTION
+
+
+
+If you plug the above code into the first program, you can replace the ZX BASIC function with one that’s hand assembled. The program should work identically, but be somewhat  faster and smaller. We don’t gain much speed, because most of the time isn’t spent in the mirror function.
+
+
+There are more examples of assembly code functions in the ZX BASIC wiki library at http://www.boriel.com/wiki/en/index.php/ZX_BASIC:Library
+
+
+The above code /isn’t/ the most efficient in the world. For example, it would be possible, since we don’t use the HL register for anything else, to not push the return address onto the stack, but to hold it in HL, and instead of a ret instruction at the end, which pulls an address off the stack and goes there, we could do jp hl instead.
+
+
+Note that you can ONLY get away with ending a function with ret (or sneaky jp hl tricks) if it’s a fastcall function. If it’s not fastcall, there’s housekeeping to do, so you should end the function by letting it reach the END FUNCTION statement. Most of the library functions aren’t fastcall, so you’ll see they often end by jumping to a label at the end of the machine code.
+
+
+Incidentally, you may be interested in the discussion about the most efficient way to do this function:
+
+http://www.boriel.com/forum/how-to-tutorials/tutorial-how-to-put-inline-assembly-functions-into-zx-basic-t729.html

@@ -1,0 +1,1 @@
+AUTOPLAY    equ 0

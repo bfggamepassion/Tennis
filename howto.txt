@@ -1,0 +1,17 @@
+# 1. Initialise le dépôt sur la branche principale "main"
+git init -b main
+
+# 2. Ajoute tous les fichiers au suivi Git
+git add .
+
+# 3. Crée le premier commit
+git commit -m "Initial commit"
+
+# 1. Associe l'adresse du nouveau dépôt OptiCPC
+git remote add origin https://github.com/bfggamepassion/OptiCPC.git
+
+# 2. Envoie les fichiers sur GitHub
+git push -u origin main
+
+Si erreur : 
+git remote set-url origin https://github.com/bfggamepassion/OptiCPC.git
