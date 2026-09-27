@@ -11,7 +11,7 @@ Ce que la Master System apporte :
 
 ## Jouer
 
-Cartouche : `build/tennis.sms` (64 Ko, mapper Sega). Elle marche dans tout émulateur Master System : Emulicious, MEKA, ou RetroArch avec le cœur Genesis Plus GX. Elle marche aussi sur une vraie console avec une cartouche flash. L'en-tête `TMR SEGA` a sa somme de contrôle : le BIOS des consoles européennes et américaines lance le jeu.
+Cartouche : `Master Tennis.sms`, à la racine de ce dossier (64 Ko, mapper Sega). `build.sh` la recopie depuis `build/tennis.sms` à chaque construction normale. Elle marche dans tout émulateur Master System : Emulicious, MEKA, ou RetroArch avec le cœur Genesis Plus GX. Elle marche aussi sur une vraie console avec une cartouche flash. L'en-tête `TMR SEGA` a sa somme de contrôle : le BIOS des consoles européennes et américaines lance le jeu.
 
 Emulicious sait signaler les accès VRAM trop rapides (options de son débogueur) : c'est utile pour vérifier la règle du VDP décrite plus bas.
 

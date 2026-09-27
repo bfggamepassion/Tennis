@@ -21,3 +21,7 @@ cp -r src gb gfx "$WORK/"
 cp "$WORK/build/page01.bin" "$WORK/build/page2.bin" "$WORK/build/page3.bin" \
    "$WORK/build/tennis.sym" "$WORK/build/tennis.lst" build/
 "$PY" -X utf8 tools/make_rom.py
+case " $* " in
+  *AUTOPLAY*) ;;                            # version de test : pas gardée
+  *) cp build/tennis.sms "Master Tennis.sms" ;;   # cartouche gardée dans le dépôt
+esac
