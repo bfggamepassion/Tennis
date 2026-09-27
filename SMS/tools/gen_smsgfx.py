@@ -47,8 +47,10 @@ PAL_SPR = ['navy', 'black', 'skin', 'white', 'red', 'dred', 'lblue', 'dblue',
 
 # Zones du stade (pixels écran)
 NET = (40, 176, 102, 112)           # x0, x1, y0, y1 (exclus)
-MARIO = (170, 189, 72, 97)
-CHAIR = [(180, 192, 97, 112), (189, 192, 85, 97)]
+MARIO = (170, 192, 72, 97)
+CHAIR = [(180, 192, 97, 112), (190, 192, 85, 97),      # échelle, montant
+         (181, 191, 93, 97), (188, 190, 85, 93)]       # siège, dossier
+CHAIR_SOLID = CHAIR[2:]             # siège et dossier : pleins (le sol n'y est pas visible)
 
 # Spectateurs : vêtements (clair, foncé) et cheveux
 SHIRTS = [('red', 'dred'), ('lblue', 'dblue'), ('white', 'grey'), ('green', 'dgreen'),
@@ -223,18 +225,21 @@ def color_floor(S, img, floor):
                 else:
                     img[y][x] = {1: 'white', 2: 'grey', 3: 'black'}[s]
             elif any(inside(x, y, b) for b in CHAIR):
-                img[y][x] = {0: 'field', 1: 'orange', 2: 'brown', 3: 'black'}[s]
+                see = 'orange' if any(inside(x, y, b) for b in CHAIR_SOLID) else 'field'
+                img[y][x] = {0: see, 1: 'orange', 2: 'brown', 3: 'black'}[s]
             elif inside(x, y, MARIO):
                 if s == 3:
                     img[y][x] = 'black'
-                elif s == 0:
-                    img[y][x] = 'field' if reach[y][x] else 'white'
-                elif y < 80:                            # casquette
-                    img[y][x] = 'red'
-                elif y < 86:                            # visage
-                    img[y][x] = 'skin' if s == 1 else 'brown'
-                else:                                   # chemise, salopette
-                    img[y][x] = 'red' if s == 1 else 'blue'
+                elif s == 0 and reach[y][x]:
+                    img[y][x] = 'field'                 # le sol autour de lui
+                elif y < 80:                            # casquette (et son écusson blanc)
+                    img[y][x] = 'white' if s == 0 else 'red'
+                elif y < 85:                            # visage : peau, yeux blancs
+                    img[y][x] = {0: 'white', 1: 'skin', 2: 'red'}[s]
+                elif y >= 93 and s == 2:                # chaussures
+                    img[y][x] = 'brown'
+                else:                                   # manches rouges, salopette bleue
+                    img[y][x] = 'red' if s == 0 else 'blue'
             elif s == 0:
                 img[y][x] = ground(x, y)
             else:

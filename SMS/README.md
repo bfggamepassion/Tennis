@@ -35,17 +35,20 @@ Emulicious sait signaler les accès VRAM trop rapides (options de son débogueur
 | Murs | liseré clair juste après le public, puis la bande jusqu'au sol | vert sombre, liseré vert clair |
 | Sol | remplissage depuis les bords du sol, arrêté par les lignes | autour du court : vert ; court (zone fermée par les lignes) : bleu ; lignes : blanc |
 | Filet | rectangle | bande blanche, mailles grises, poteaux noirs, sol visible entre les mailles |
-| Mario (arbitre) | rectangle, rangées casquette / visage / corps | casquette et chemise rouges, salopette bleue, peau, yeux blancs |
-| Chaise | rectangle | bois orange et brun |
+| Mario (arbitre) | rectangle, rangées casquette / visage / corps | casquette rouge à écusson blanc, visage, yeux blancs, manches rouges, salopette bleue, chaussures brunes |
+| Chaise | rectangles : échelle, montant, siège, dossier | bois orange et brun (le sol se voit entre les barreaux) |
 
 Le hasard des spectateurs est tiré avec une graine fixe : le public est toujours le même.
 
 Les tuiles qui ne diffèrent que par un retournement sont partagées (le VDP sait les retourner). Chaque tuile prend la palette du décor si elle lui suffit, sinon celle des sprites : c'est le cas du public, qui y trouve déjà la peau, les rouges, les bleus, le blanc et le jaune.
 
 **Joueurs** (`tools/gen_smssprites.py`) : la couleur dépend de la tuile GB d'où vient le pixel.
-- Les tuiles en damier sont la raquette : cordage gris.
+- Les tuiles en damier sont la raquette : toujours noire.
 - Rangée du haut = tête, rangée du bas = jambes, entre les deux = corps.
-- Teinte 1 = peau, teinte 3 = contour noir, teinte 2 = couleur du joueur :
+- Teinte 1 = peau, teinte 3 = contour noir, teinte 2 = couleur du joueur.
+- Yeux : les pixels transparents enfermés dans les 12 premières lignes (la tête) deviennent blancs. Les trous en damier du cordage restent transparents.
+
+
 
 | Joueur | Maillot (et bandeau) | Short |
 |---|---|---|
