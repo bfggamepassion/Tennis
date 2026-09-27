@@ -6,7 +6,8 @@ la tuile d'où vient chaque pixel :
   - rangée du haut (tête) : teinte 1 = peau, 2 = couleur du joueur, 3 = noir ;
   - rangée du bas (jambes) : teinte 1 = peau, 2 = short, 3 = noir ;
   - entre les deux (corps) : teinte 1 = peau, 2 = maillot, 3 = noir ;
-  - yeux : pixels transparents de la tête enfermés dans le dessin -> blanc.
+  - trous enfermés dans le dessin (yeux, intérieur des chaussures) -> blanc,
+    sauf ceux du cordage.
 Joueur 1 : maillot rouge, short blanc. Joueur 2 : maillot bleu ciel, short
 bleu marine. Balle jaune, ombre noire, marque grise.
 
@@ -64,15 +65,15 @@ def color_player(items, colors):
     rows = [dy for dy, _, t, _ in items if not is_racket(t)]
     top, bottom = min(rows), max(rows)
     pix = {}
-    head = set()                # pixels de la tête (hors raquette)
+    strings = set()             # pixels des tuiles de raquette
     for dy, dx, t, attr in items:
         px = es.tile_px(t)
         racket = is_racket(t)
         part = 'head' if dy == top else 'legs' if dy == bottom else 'body'
         for y in range(8):
             for x in range(8):
-                if dy + y < top + 12 and not racket:    # tête : 12 premières lignes
-                    head.add((dx + x, dy + y))
+                if racket:
+                    strings.add((dx + x, dy + y))
                 sx = 7 - x if attr & 0x20 else x
                 sy = 7 - y if attr & 0x40 else y
                 s = px[sy][sx]
@@ -83,12 +84,15 @@ def color_player(items, colors):
                 else:
                     c = {1: 'skin', 2: colors[part], 3: 'black'}[s]
                 pix[(dx + x, dy + y)] = c
-    # yeux : pixels transparents de la tête enfermés dans le dessin
-    # (sauf les trous du cordage : en damier, leurs voisins en diagonale sont vides)
+    # trous enfermés dans le dessin (yeux, intérieur des chaussures) : blanc,
+    # sauf les trous du cordage (tuile de raquette, ou damier : noir sur les
+    # 4 côtés, vide en diagonale)
     for x, y in enclosed(pix):
-        diag = sum((x + a, y + b) not in pix for a in (-1, 1) for b in (-1, 1))
-        if (x, y) in head and diag < 2:
-            pix[(x, y)] = 'white'
+        around = [pix.get(n) for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1))]
+        diag = [(x + a, y + b) in pix for a in (-1, 1) for b in (-1, 1)]
+        if (x, y) in strings or (all(c == 'black' for c in around) and not any(diag)):
+            continue
+        pix[(x, y)] = 'white'
     return pix
 
 
